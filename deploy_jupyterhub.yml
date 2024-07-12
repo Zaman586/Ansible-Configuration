@@ -1,0 +1,41 @@
+---
+- name: Deploy jupyter Docker Container
+  hosts: ubuntu
+  become: true
+
+  tasks:
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+        update_cache: yes
+    
+    - name: Ensure Docker service is running
+      service:
+        name: docker
+        state: started
+        enabled: true
+    
+    - name: Pull Jupyterhub Docker image
+      docker_image:
+        name: jupyterhub/jupyterhub
+        tag: 5
+        source: pull
+    
+    - name: Run jupyterhub Docker container
+      docker_container:
+        name: jupyterhub
+        image: jupyterhub/jupyterhub:5
+        state: started
+        restart: yes
+        restart_policy: "always"
+        ports:
+          - "8000:8000"
+        volumes:
+          - "/srv/jupyterhub:/srv/jupyterhub"
+          - "/etc/group:/etc/group"
+          - "/etc/passwd:/etc/passwd"
+          - "/home:/home"
+        env:
+          GITLAB_OMNIBUS_CONFIG: |
+            JUPYTER_ENABLE_LAB 'yes'
